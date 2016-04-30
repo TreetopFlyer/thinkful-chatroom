@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="//code.jquery.com/jquery-2.1.0.js"></script>
+        <script src="main.js"></script> 
+    </head>
+    <body>
+        
+        <input type="text">
+        <div id="messages"></div>
+        
+<script type="text/javascript">
+var input = $('input');
+var messages = $('#messages');
+var socket = io();
+
+var addMessage = function(message) {
+    messages.append('<div>' + message + '</div>');
+};
+
+input.on('keydown', function(event) {
+    if (event.keyCode != 13) {
+        return;
+    }
+
+    var message = input.val();
+    addMessage(message);
+    socket.emit('message', message);
+    input.val('');
+});
+
+socket.on('message', addMessage);
+</script>
+
+    </body>
+</html>
