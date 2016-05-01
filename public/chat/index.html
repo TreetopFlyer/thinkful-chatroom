@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+    <head>
+    <!--
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.0/css/font-awesome.css" />
+    -->
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular-route.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
+    </head>
+    <body>
+        <div ng-app="Chat">
+            <div ng-controller="ControllerChat">
+                
+                <h2>{{title}}</h2>
+                
+                <ul class="Members">
+                    <li ng-repeat="member in members">
+                        {{member.name}}
+                    </li>
+                </ul>
+                
+                <ul class="Messages">
+                    <li ng-repeat="message in messages">
+                        <strong>{{message.member.name}} :</strong>
+                        <span>{{message.text}}</span>
+                    </li>
+                </ul>
+                
+                <form ng-submit="">
+                    <input type="text"/>
+                    <button>send</button>
+                </form>
+                
+                
+            </div>
+        </div>
+        
+<script>
+    
+    var Chat = angular.module("Chat", []);
+    
+    Chat.factory("FactorySocket", [function(){return io();}]);
+    
+    Chat.factory("FactoryMessages", [function(){
+        var messages = {};
+        messages.max = 10;
+        messages.log = [];
+        messages.create = function(inMember, inMessage){
+            var obj = {};
+            obj.member = inMember;
+            obj.text = inMessage;
+            messages.log.push(obj);
+            return obj;
+        };
+        return messages;
+    }]);
+    
+    Chat.factory("FactoryMember", [function(){
+        var members = {};
+        members.instances = [];
+        members.create = function(inName){
+            var obj = {};
+            obj.name = inName;
+            obj.typing = false;
+            obj.id = Math.floor(Math.random()*10000);
+            members.instances.push(obj);
+            return obj;
+        };
+        members.destroy = function(inMember){
+            var i;
+            for(i=0; i<members.instances.length; i++){
+                if(members.instances[i].id === inMember.id){
+                    members.instances.splice(i, 1);
+                    return;
+                }
+            }
+        };
+        members.chatBot = members.create("Chat Bot");
+        members.chatBot.id = 0;
+        return members;
+    }]);
+    
+    Chat.factory("FactoryProfile", [function(){
+        
+        var profile = {};
+        
+        profile.membership = {};
+        
+        
+        return profile;
+        
+    }])
+    
+    Chat.controller("ControllerChat", ["$scope", "FactoryMember", "FactoryMessages", "FactorySocket", function(inScope, inMembers, inMessages, inSocket){
+        inScope.title = "Chat room";
+        inScope.members = inMembers.instances;
+        var me = inMembers.create("seth");
+        
+        inScope.messages = inMessages.log;
+        inMessages.create(inMembers.chatBot, "welcome");
+        
+        inSocket.on('signIn', function(inMember){
+            console.log("member signed in", inMember);
+            inScope.members.push(inMember);
+        });
+        
+        inSocket.emit('signIn', me);
+        
+        
+    }]);
+    
+</script>
+        
+    </body>
+</html>

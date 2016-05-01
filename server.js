@@ -19,6 +19,11 @@ serverSockets.on('connection', function(inSocket){
         inSocket.broadcast.emit('message', inMessage)
     });
     
+    inSocket.on('signIn', function(inData){
+        console.log(inData);
+        inSocket.broadcast.emit('signIn', inData);
+    })
+    
 });
 
 
