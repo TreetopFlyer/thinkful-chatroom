@@ -8,23 +8,39 @@ serverExpress = express();
 serverExpress.use(express.static('public'));
 
 serverHTTP = http.Server(serverExpress);
-
+serverHTTP.listen(80);
 
 serverSockets = socket_io(serverHTTP);
 serverSockets.on('connection', function(inSocket){
-    console.log('client has connected');
     
-    inSocket.on('message', function(inMessage) {
-        console.log('Received message:', inMessage);
-        inSocket.broadcast.emit('message', inMessage)
+    inSocket.chatMeta = {
+        alias:'anon',
+        id:inSocket.conn.id,
+        message:''
+    };
+    
+    console.log('client has connected', inSocket.chatMeta);
+    
+    inSocket.on('disconnect', function(){
+       console.log('client has disconnected', inSocket.chatMeta);
+       ///////////////////
+       inSocket.broadcast.emit('left', chatMeta);
     });
     
-    inSocket.on('signIn', function(inData){
-        console.log(inData);
-        inSocket.broadcast.emit('signIn', inData);
-    })
+    inSocket.on('joined', function(inMessage){
+       inSocket.alias = inMessage;
+       ///////////////////
+       inSocket.broadcast.emit('joined', chatMeta);
+    });
+    
+    inSocket.on('message', function(inMessage) {
+        inSocket.chatMeta.message = inMessage;
+        //////////////////
+        inSocket.broadcast.emit('message', inSocket.chatMeta);
+        inSocket.chatMeta.message = '';
+    });
     
 });
 
 
-serverHTTP.listen(80);
+
