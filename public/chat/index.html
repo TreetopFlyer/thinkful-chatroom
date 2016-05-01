@@ -51,7 +51,7 @@ form{
                                     <span class="input-group-addon" id="Alias">
                                         <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
                                     </span>
-                                    <input type="text" class="form-control" placeholder="Username" aria-describedby="Alias" ng-model="user.alias">
+                                    <input type="text" class="form-control" placeholder="Username" aria-describedby="Alias" ng-model="user.alias" ng-minlength="1">
                                     <span class="input-group-btn">
                                         <button class="btn btn-primary" type="submit">Join!</button>
                                     </span>
@@ -60,9 +60,6 @@ form{
 
                             <form ng-submit="chatSubmit();" ng-show="user.authenticated">
                                 <div class="input-group">
-                                    <span class="input-group-addon" id="Chat">
-                                        <span class="glyphicon glyphicon-bullhorn" aria-hidden="true"></span>
-                                    </span>
                                     <input type="text" class="form-control" placeholder="Send a message ..." aria-describedby="Chat" ng-model="user.message">
                                     <span class="input-group-btn">
                                         <button class="btn btn-primary" type="submit">Chat</button>
@@ -102,7 +99,7 @@ var Chat = angular.module("Chat", []);
 
 Chat.factory("FactoryUser", [function(){
     var user = {};
-    user.alias = 'anon';
+    user.alias = '';
     user.id = 0,
     user.message = '';
     user.authenticated = false;

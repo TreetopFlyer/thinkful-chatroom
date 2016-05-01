@@ -16,21 +16,23 @@ serverSockets = socket_io(serverHTTP);
 serverSockets.on('connection', function(inSocket){
     
     inSocket.chatMeta = {
-        alias:'anon',
+        alias:'',
+        registered:false,
         id:inSocket.conn.id,
         message:''
     };
+    console.log('client has connected', inSocket.chatMeta);
     sockets.push(inSocket.chatMeta);
     
+    //
     var members = [];
     for(var i=0; i<sockets.length; i++){
-        if(sockets[i].alias !== 'anon'){
+        if(sockets[i].registered){
             members.push(sockets[i]);
         }
     }
     inSocket.emit('members', members);
-    
-    console.log('client has connected', inSocket.chatMeta);
+
     
     inSocket.on('disconnect', function(){
        console.log('client has disconnected', inSocket.chatMeta);
@@ -48,11 +50,13 @@ serverSockets.on('connection', function(inSocket){
        console.log('client has signed out', inSocket.chatMeta);
        ///////////////////
        inSocket.broadcast.emit('left', inSocket.chatMeta);
-       inSocket.chatMeta.alias = 'anon';
+       inSocket.chatMeta.alias = '';
+       inSocket.chatMeta.registered = false;
     });
     
     inSocket.on('alias', function(inMessage){
        inSocket.chatMeta.alias = inMessage;
+       inSocket.chatMeta.registered = true;
        console.log('client has alias', inSocket.chatMeta);
        ///////////////////
        inSocket.broadcast.emit('joined', inSocket.chatMeta);
