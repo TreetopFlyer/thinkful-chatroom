@@ -1,44 +1,99 @@
 <!doctype html>
 <html>
     <head>
-    <!--
+
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.0/css/font-awesome.css" />
-    -->
+
     <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular.min.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular-route.js"></script>
     <script src="/socket.io/socket.io.js"></script>
 
+<style>
+form{
+    margin:10px;
+}    
+</style>
+
     </head>
     <body>
         <div ng-app="Chat">
-            <div ng-controller="ControllerChat">
+            <div ng-controller="ControllerChat" class="container">
 
-                <ul class="Members">
-                    <li ng-repeat="member in members">
-                        {{member.name}}
-                    </li>
-                </ul>
+                <div class="jumbotron">
+                    <h1>Chatter</h1>
+                    <p>
+                        Join the conversation
+                    </p>
+                </div>
                 
-                <ul class="Messages">
-                    <li ng-repeat="meta in chatMessages">
-                        <strong>{{meta.alias}} :</strong>
-                        <span>{{meta.message}}</span>
-                    </li>
-                </ul>
-                
-                <form ng-submit="aliasSubmit();">
-                    <label for="Alias">Your Alias</label>
-                    <input id="Alias" type="text" ng-model="aliasInput"/>
-                    <button>send</button>
-                </form>
-                
-                <form ng-submit="chatSubmit();">
-                    <label for="Chat">Chat</label>
-                    <input id="Chat" type="text" ng-model="chatInput"/>
-                    <button>send</button>
-                </form>
-                
+                <div class="row">
+                    <div class="col-sm-8">
+                        
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Chatroom</h3>
+                            </div>
+                            <ul class="Messages">
+                                <li ng-repeat="meta in messages.log">
+                                    <strong>{{meta.alias}} :</strong>
+                                    <span>{{meta.message}}</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Join Conversation</h3>
+                            </div>
+                            
+                            <form ng-submit="aliasSubmit();" ng-hide="user.authenticated">
+                                <div class="input-group">
+                                    <span class="input-group-addon" id="Alias">
+                                        <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+                                    </span>
+                                    <input type="text" class="form-control" placeholder="Username" aria-describedby="Alias" ng-model="user.alias">
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-primary" type="submit">Join!</button>
+                                    </span>
+                                </div>
+                            </form>
+
+                            <form ng-submit="chatSubmit();" ng-show="user.authenticated">
+                                <div class="input-group">
+                                    <span class="input-group-addon" id="Chat">
+                                        <span class="glyphicon glyphicon-bullhorn" aria-hidden="true"></span>
+                                    </span>
+                                    <input type="text" class="form-control" placeholder="Send a message ..." aria-describedby="Chat" ng-model="user.message">
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-primary" type="submit">Chat</button>
+                                    </span>
+                                </div>
+                            </form>
+                            
+                            <form ng-submit="aliasRevoke();" ng-show="user.authenticated">
+                                <span>Signed in as:</span>
+                                <strong>{{user.alias}}</strong>
+                                <br/>
+                                <button class="btn btn-danger btn-xs" type="submit">Leave</button>
+                            </form>
+                            
+                        </div>
+                        
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Users Online</h3>
+                            </div>
+                            <ul class="Members list-group">
+                                <li class="list-group-item" ng-repeat="member in members.log">
+                                    {{member.alias}}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
         
@@ -50,28 +105,98 @@ Chat.factory("FactoryUser", [function(){
     user.alias = 'anon';
     user.id = 0,
     user.message = '';
+    user.authenticated = false;
     return user;
 }]);
 
-Chat.controller("ControllerChat", ["$scope", "FactoryUser", function(inScope, inUser){
+Chat.factory("FactoryMessages", [function(){
+    var messages = {};
+    messages.log = [];
+    messages.add = function(inUserData){
+        messages.log.push({
+            alias: inUserData.alias,
+            id: inUserData.id,
+            message: inUserData.message
+        });
+    };
+    return messages;
+}]);
+
+Chat.factory("FactoryMembers", [function(){
+    var members = {};
+    members.log = [];
+    members.add = function(inUserData){
+        members.log.push({
+            alias: inUserData.alias,
+            id: inUserData.id,
+            message: inUserData.message
+        });
+    };
+    members.remove = function(inUserData){
+        var i;
+        for(i=0; i<members.log.length; i++){
+            if(members.log[i].id === inUserData.id){
+                members.log.splice(i, 1);
+                return;
+            }
+        }  
+    };
+    return members;
+}]);
+
+Chat.controller("ControllerChat", ["$scope", "FactoryUser", "FactoryMessages", "FactoryMembers", function(inScope, inUser, inMessages, inMembers){
     var sockets = io();
     
-    inScope.aliasInput = inUser.alias;
-    inScope.aliasSubmit = function(){
-        sockets.emit('alias', inScope.aliasInput);  
-    };
+    inScope.user = inUser;
+    inScope.messages = inMessages;
+    inScope.members = inMembers;
     
-    inScope.chatMessages = [];
-    inScope.chatInput = inUser.message;
-    inScope.chatSubmit = function(){
-        inScope.chatMessages.push();
-        sockets.emit('chat', inScope.chatInput); 
+    
+    sockets.on('members', function(inMembers){
+        for(var i=0; i<inMembers.length; i++){
+            inScope.members.add(inMembers[i]);
+        }
+        inScope.$apply();
+    })
+    
+     //// users
+    // send login
+    inScope.aliasSubmit = function(){
+        inScope.user.authenticated = true;
+        inScope.members.add(inScope.user);
+        sockets.emit('alias', inScope.user.alias);  
     };
+    // recieve login
+    sockets.on('joined', function(inUser){
+        console.log('user joined', inUser);
+        inScope.members.add(inUser);
+        inScope.$apply();
+    });
+    // send logout
+    inScope.aliasRevoke = function(){
+        console.log("revoking alias");
+        inScope.user.authenticated = false;
+        inScope.members.remove(inUser);
+        inScope.$apply();
+        sockets.emit('left', inScope.user.alias);  
+    };
+    // recieve logout
+    sockets.on('left', function(inUser){
+        inScope.members.remove(inUser);
+        inScope.$apply();
+    });
+    
+     //// chat
+    // send chat
+    inScope.chatSubmit = function(){
+        inScope.messages.add(inUser);
+        sockets.emit('chat', inScope.user.message); 
+        inScope.user.message = "";
+    };
+    // recieve chat
     sockets.on('chat', function(inMessage){
-        inScope.$apply(function(){
-            inScope.chatMessages.push(inMessage);
-        });
-        console.log('message recieved', inScope.chatMessages);
+        inScope.messages.add(inMessage);
+        inScope.$apply();
     });
     
 }]);
