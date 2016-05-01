@@ -24,19 +24,21 @@ serverSockets.on('connection', function(inSocket){
     inSocket.on('disconnect', function(){
        console.log('client has disconnected', inSocket.chatMeta);
        ///////////////////
-       inSocket.broadcast.emit('left', chatMeta);
+       inSocket.broadcast.emit('left', inSocket.chatMeta);
     });
     
-    inSocket.on('joined', function(inMessage){
-       inSocket.alias = inMessage;
+    inSocket.on('alias', function(inMessage){
+       inSocket.chatMeta.alias = inMessage;
+       console.log('client has alias', inSocket.chatMeta);
        ///////////////////
-       inSocket.broadcast.emit('joined', chatMeta);
+       inSocket.broadcast.emit('joined', inSocket.chatMeta);
     });
     
-    inSocket.on('message', function(inMessage) {
+    inSocket.on('chat', function(inMessage) {
         inSocket.chatMeta.message = inMessage;
+        console.log('client said', inSocket.chatMeta.message);
         //////////////////
-        inSocket.broadcast.emit('message', inSocket.chatMeta);
+        inSocket.broadcast.emit('chat', inSocket.chatMeta);
         inSocket.chatMeta.message = '';
     });
     
