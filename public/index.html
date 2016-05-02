@@ -1,38 +1,102 @@
 <!doctype html>
 <html>
     <head>
-        <meta charset="utf-8">
+        <title>Chatter</title>
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
-        <script src="//code.jquery.com/jquery-2.1.0.js"></script>
-        <script src="main.js"></script> 
+        <script src="main.js"></script>
+        <style>
+            form{
+                margin:10px;
+            }
+        </style>
     </head>
-    <body>
-        
-        <input type="text">
-        <div id="messages"></div>
-        
-<script type="text/javascript">
-var input = $('input');
-var messages = $('#messages');
-var socket = io();
+    <body ng-app="Chat">
 
-var addMessage = function(message) {
-    messages.append('<div>' + message + '</div>');
-};
+        <div ng-controller="ControllerChat" class="container">
+            
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="jumbotron">
+                        <h1>Chatter</h1>
+                        <p>
+                            TCP FTW
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-sm-8">
+                    
+                    <div class="panel panel-default" ng-show="messages.log.length > 0">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Messages</h3>
+                        </div>
+                        
+                        <ul class="Messages list-group">
+                            <li class="list-group-item" ng-repeat="meta in messages.log">
+                                <strong>{{meta.alias}} :</strong>
+                                <span>{{meta.message}}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Join Conversation</h3>
+                        </div>
+                        
+                        <form ng-submit="aliasSubmit();" ng-hide="user.authenticated">
+                            <div class="input-group">
+                                <span class="input-group-addon" id="Alias">
+                                    <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+                                </span>
+                                <input type="text" class="form-control" placeholder="Username" aria-describedby="Alias" ng-model="user.alias" ng-minlength="1">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-primary" type="submit">Join!</button>
+                                </span>
+                            </div>
+                        </form>
 
-input.on('keydown', function(event) {
-    if (event.keyCode != 13) {
-        return;
-    }
+                        <form ng-submit="chatSubmit();" ng-show="user.authenticated">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Send a message ..." aria-describedby="Chat" ng-model="user.message">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-primary" type="submit">Chat</button>
+                                </span>
+                            </div>
+                        </form>
+                        
+                        <div class="panel-footer" ng-show="user.authenticated">
+                            <form ng-submit="aliasRevoke();">
+                                <button class="btn btn-primary" type="submit">
+                                    Sign out:
+                                    <strong>{{user.alias}}</strong>
+                                </button>
+                            </form>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col-sm-4">
+                    <div class="panel panel-default" ng-show="members.log.length > 0">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Users Online</h3>
+                        </div>
+                        <ul class="Members list-group">
+                            <li class="list-group-item" ng-repeat="member in members.log">
+                                {{member.alias}}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
 
-    var message = input.val();
-    addMessage(message);
-    socket.emit('message', message);
-    input.val('');
-});
+        </div>
 
-socket.on('message', addMessage);
-</script>
-
+       
     </body>
 </html>
