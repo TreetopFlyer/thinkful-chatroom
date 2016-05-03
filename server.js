@@ -19,7 +19,8 @@ serverSockets.on('connection', function(inSocket){
         alias:'',
         registered:false,
         id:inSocket.conn.id,
-        message:''
+        message:'',
+        points:0
     };
     console.log('client has connected', inSocket.chatMeta);
     sockets.push(inSocket.chatMeta);
@@ -68,6 +69,11 @@ serverSockets.on('connection', function(inSocket){
         //////////////////
         inSocket.broadcast.emit('chat', inSocket.chatMeta);
         inSocket.chatMeta.message = '';
+    });
+    
+    inSocket.on('guess', function(inGuess){
+        console.log("someone guessed", inGuess);
+        inSocket.broadcast.emit('guess', inGuess);
     });
     
 });

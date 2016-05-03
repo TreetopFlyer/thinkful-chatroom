@@ -4,6 +4,7 @@
         <title>Chatter</title>
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
         <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular.min.js"></script>
+        <script src="//code.jquery.com/jquery-2.1.0.js"></script>
         <script src="/socket.io/socket.io.js"></script>
         <script src="main.js"></script>
         <style>
@@ -19,35 +20,49 @@
             <div class="row">
                 <div class="col-sm-12">
                     <div class="jumbotron">
-                        <h1>Chatter</h1>
-                        <p>
-                            TCP FTW
-                        </p>
+                        <h1>Pictionary</h1>
                     </div>
                 </div>
             </div>
             
             <div class="row">
                 <div class="col-sm-8">
-                    
-                    <div class="panel panel-default" ng-show="messages.log.length > 0">
+
+                    <div class="panel panel-default">
                         <div class="panel-heading">
-                            <h3 class="panel-title">Messages</h3>
+                            <h3 class="panel-title">Drawing</h3>
                         </div>
-                        
-                        <ul class="Messages list-group">
-                            <li class="list-group-item" ng-repeat="meta in messages.log">
-                                <strong>{{meta.alias}} :</strong>
-                                <span>{{meta.message}}</span>
+                        <div class="panel-body">
+                            <canvas ng-drawing ng-interactive="user.drawing" width="800" height="600" style="width:800px; height:600px;"></canvas>
+                        </div>
+                        <div class="panel-body">
+                            <h3 ng-show="user.authenticated">Guesses remaining: <span>{{user.guesses}}</span></h3>
+                            <span ng-repeat="word in words.list">
+                                <button type="button" class="btn btn-success" ng-class="{'disabled':word.guessed}" ng-click="words.click(word.index);">{{word.word}}</button>
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-sm-4">
+                    <div class="panel panel-default" ng-show="members.log.length > 0">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Users Online</h3>
+                        </div>
+                        <ul class="Members list-group">
+                            <li class="list-group-item" ng-repeat="member in members.log">
+                                <span>{{member.alias}}</span>
+                                <span ng-show="member.drawing" class="label label-primary">Drawing!</span>
+                                <span class="badge">{{member.points}}</span>
                             </li>
                         </ul>
                     </div>
                     
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <h3 class="panel-title">Join Conversation</h3>
+                            <h3 ng-hide="user.authenticated" class="panel-title">Join the game!</h3>
+                            <h3 ng-show="user.authenticated" class="panel-title">Logged in as: <strong>{{user.alias}}</strong></h3>
                         </div>
-                        
                         <form ng-submit="aliasSubmit();" ng-hide="user.authenticated">
                             <div class="input-group">
                                 <span class="input-group-addon" id="Alias">
@@ -59,39 +74,35 @@
                                 </span>
                             </div>
                         </form>
-
-                        <form ng-submit="chatSubmit();" ng-show="user.authenticated">
-                            <div class="input-group">
-                                <input type="text" class="form-control" placeholder="Send a message ..." aria-describedby="Chat" ng-model="user.message">
-                                <span class="input-group-btn">
-                                    <button class="btn btn-primary" type="submit">Chat</button>
-                                </span>
-                            </div>
+                        <form ng-show="user.authenticated" ng-submit="aliasRevoke();">
+                            <button class="btn btn-primary" type="submit">
+                                Sign out
+                            </button>
                         </form>
-                        
-                        <div class="panel-footer" ng-show="user.authenticated">
-                            <form ng-submit="aliasRevoke();">
-                                <button class="btn btn-primary" type="submit">
-                                    Sign out:
-                                    <strong>{{user.alias}}</strong>
-                                </button>
-                            </form>
-                        </div>
-                        
                     </div>
                     
-                </div>
-                <div class="col-sm-4">
-                    <div class="panel panel-default" ng-show="members.log.length > 0">
+                    <div class="panel panel-default">
                         <div class="panel-heading">
-                            <h3 class="panel-title">Users Online</h3>
+                            <h3 class="panel-title">Chat</h3>
                         </div>
-                        <ul class="Members list-group">
-                            <li class="list-group-item" ng-repeat="member in members.log">
-                                {{member.alias}}
+                        <ul class="Messages list-group">
+                            <li class="list-group-item" ng-repeat="meta in messages.log">
+                                <strong>{{meta.alias}} :</strong>
+                                <span>{{meta.message}}</span>
                             </li>
                         </ul>
+                        <div class="panel-footer">
+                            <form ng-submit="chatSubmit();" ng-show="user.authenticated">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Send a message ..." aria-describedby="Chat" ng-model="user.message">
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-primary" type="submit">Chat</button>
+                                    </span>
+                                </div>
+                            </form>
+                        </div>
                     </div>
+                    
                 </div>
             </div>
 
