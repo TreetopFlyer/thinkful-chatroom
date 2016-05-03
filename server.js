@@ -3,7 +3,7 @@ var http = require('http');
 var socket_io = require('socket.io');
 
 var serverExpress, serverHTTP, serverSockets;
-var sockets;
+var sockets, registered, drawing;
 
 serverExpress = express();
 serverExpress.use(express.static('public'));
@@ -12,6 +12,29 @@ serverHTTP = http.Server(serverExpress);
 serverHTTP.listen(80);
 
 sockets = [];
+registered = [];
+
+function removeFrom(inItemWithMeta, inArray){
+    for(var i=0; i<inArray.length; i++){
+        if(inArray[i].chatMeta.id === inItemWithMeta.chatMeta.id){
+            inItemWithMeta.chatMeta.registered = false;
+            inArray.splice(i, 1);
+            return;
+        }
+    }
+}
+function addTo(inItemWithMeta, inArray){
+    inItemWithMeta.chatMeta.registered = true;
+    inArray.push(inItemWithMeta);
+}
+function extractMetas(inArray){
+    var out = [];
+    for(var i=0; i<inArray.length; i++){
+        out.push(inArray[i].chatMeta);
+    }
+    return out;
+}
+
 serverSockets = socket_io(serverHTTP);
 serverSockets.on('connection', function(inSocket){
     
@@ -20,34 +43,26 @@ serverSockets.on('connection', function(inSocket){
         registered:false,
         id:inSocket.conn.id,
         message:'',
-        points:0
+        points:0,
+        drawing:false
     };
-    console.log('client has connected', inSocket.chatMeta);
-    sockets.push(inSocket.chatMeta);
     
-    //
-    var members = [];
-    for(var i=0; i<sockets.length; i++){
-        if(sockets[i].registered){
-            members.push(sockets[i]);
-        }
-    }
-    inSocket.emit('members', members);
-
+    console.log('client has connected', inSocket.chatMeta);
+    sockets.push(inSocket);
+    
+    inSocket.emit('members', extractMetas(registered));
     
     inSocket.on('disconnect', function(){
        console.log('client has disconnected', inSocket.chatMeta);
-       for(var i=0; i<sockets.length; i++){
-           if(sockets[i].id === inSocket.chatMeta.id){
-               sockets.splice(i, 1);
-               break;
-           }
-       }
+       removeFrom(inSocket, sockets);
+       removeFrom(inSocket, registered);
+       
        ///////////////////
        inSocket.broadcast.emit('left', inSocket.chatMeta);
     });
     
     inSocket.on('left', function(inMessage){
+       removeFrom(inSocket, registered);
        console.log('client has signed out', inSocket.chatMeta);
        ///////////////////
        inSocket.broadcast.emit('left', inSocket.chatMeta);
@@ -57,10 +72,18 @@ serverSockets.on('connection', function(inSocket){
     
     inSocket.on('alias', function(inMessage){
        inSocket.chatMeta.alias = inMessage;
-       inSocket.chatMeta.registered = true;
+       addTo(inSocket, registered);
+       
+       if(registered.length == 1){
+           inSocket.emit('state-drawing', inSocket.chatMeta);
+       }else{
+           inSocket.emit('state-guessing', inSocket.chatMeta);
+       }
+       
        console.log('client has alias', inSocket.chatMeta);
        ///////////////////
        inSocket.broadcast.emit('joined', inSocket.chatMeta);
+       
     });
     
     inSocket.on('chat', function(inMessage) {
@@ -71,10 +94,22 @@ serverSockets.on('connection', function(inSocket){
         inSocket.chatMeta.message = '';
     });
     
+    inSocket.on('draw', function(inPosition) {
+        //////////////////
+        inSocket.broadcast.emit('draw', inPosition);
+    });
+    
     inSocket.on('guess', function(inGuess){
         console.log("someone guessed", inGuess);
+        //////////////////
         inSocket.broadcast.emit('guess', inGuess);
     });
+    
+    inSocket.on('correct', function(){
+        inSocket.chatMeta.points++;
+        //////////////////
+        inSocket.emit('correct', inSocket.chatMeta);
+    })
     
 });
 
