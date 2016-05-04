@@ -107,6 +107,7 @@ Chat.factory("FactoryWords", ["FactorySocket", "FactoryUser", function(inSocket,
             words.all[i].guessed = false;
         }
         words.correct = words.list[Math.floor(Math.random()*words.list.length)];
+        console.log(words.correct);
     };
     words.click = function(inIndex){
         if(words.user.guesses <= 0 || !words.user.authenticated || words.user.drawing)
@@ -127,6 +128,9 @@ Chat.factory("FactoryWords", ["FactorySocket", "FactoryUser", function(inSocket,
     words.socket.on('guess', function(inGuess){
         console.log("incoming guess", inGuess);
         words.guess(inGuess);
+    });
+    words.socket.on('correct', function(inUser){
+        
     });
     
     words.reset();

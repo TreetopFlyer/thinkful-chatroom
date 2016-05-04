@@ -108,7 +108,7 @@ serverSockets.on('connection', function(inSocket){
     inSocket.on('correct', function(){
         inSocket.chatMeta.points++;
         //////////////////
-        inSocket.emit('correct', inSocket.chatMeta);
+        inSocket.broadcast.emit('correct', inSocket.chatMeta);
     })
     
 });
