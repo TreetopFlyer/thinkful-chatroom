@@ -16,8 +16,9 @@ Chat.factory("FactoryUser", [function(){
     user.points = 0;
     
     user.award = function(){
+        console.log("Client awarded! the dom may need updating tho :(");
         user.points++;
-        user.drawing = true;
+        user.guesses = 0;
     };
     
     return user;
@@ -40,9 +41,12 @@ Chat.factory("FactoryMessages", [function(){
     return messages;
 }]);
 
-Chat.factory("FactoryMembers", [function(){
+Chat.factory("FactoryMembers", ["FactoryUser", function(inUser){
+
     var members = {};
     members.log = [];
+    members.user = inUser;
+    members.drawing = false;
     members.add = function(inUserData){
         members.log.push({
             alias: inUserData.alias,
@@ -63,12 +67,13 @@ Chat.factory("FactoryMembers", [function(){
     };
     members.award = function(inUserData){
         var i;
+        console.log("Trying to award", inUserData);
+        console.log("Searching", members.log);
         for(i=0; i<members.log.length; i++){
             if(members.log[i].id === inUserData.id){
                 members.log[i].points++;
-                members.log[i].drawing = true;
-            }else{
-                members.log[i].drawing = false;
+                console.log("Awarding", members.log[i].alias);
+                return;
             }
         }  
     };
@@ -109,6 +114,7 @@ Chat.factory("FactoryWords", ["FactorySocket", "FactoryUser", function(inSocket,
         words.correct = words.list[Math.floor(Math.random()*words.list.length)];
         console.log(words.correct);
     };
+    
     words.click = function(inIndex){
         if(words.user.guesses <= 0 || !words.user.authenticated || words.user.drawing)
             return;
@@ -117,22 +123,15 @@ Chat.factory("FactoryWords", ["FactorySocket", "FactoryUser", function(inSocket,
         words.guess(inIndex);
         words.socket.emit('guess', inIndex);
         
-        console.log(words.correct, words.list[inIndex]);
         if(words.correct === words.list[inIndex]){
+            words.user.award();
             words.socket.emit('correct', words.correct);
         }
     };
     words.guess = function(inIndex){
         words.list[inIndex].guessed = true;
     };
-    words.socket.on('guess', function(inGuess){
-        console.log("incoming guess", inGuess);
-        words.guess(inGuess);
-    });
-    words.socket.on('correct', function(inUser){
-        
-    });
-    
+
     words.reset();
     return words;
     
@@ -235,7 +234,6 @@ Chat.controller("ControllerChat", ["$scope", "FactorySocket", "FactoryUser", "Fa
     inScope.aliasRevoke = function(){
         inScope.user.authenticated = false;
         inScope.members.remove(inUser);
-        inScope.$apply();
         sockets.emit('left', inScope.user.alias);  
     };
     // recieve logout
@@ -258,24 +256,30 @@ Chat.controller("ControllerChat", ["$scope", "FactorySocket", "FactoryUser", "Fa
     });
     
      //// game
+    // guess
+    sockets.on('guess', function(inGuess){
+        console.log("incoming guess", inGuess);
+        inScope.words.guess(inGuess);
+        inScope.$apply();
+    });
     // correct guess
     sockets.on('correct', function(inUser){
-        console.log("Correct answer by", inUser);
         inScope.members.award(inUser);
         inScope.$apply();
     });
     
+
     // draw mode
     sockets.on('state-drawing', function(inUser){
         inScope.user.drawing = true;
         inScope.user.guessing = false;
         inScope.$apply();
-    })
+    });
     
     sockets.on('state-guessing', function(inUser){
         inScope.user.drawing = false;
         inScope.user.guessing = true;
         inScope.$apply();
-    })
+    });
     
 }]);

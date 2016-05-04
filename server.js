@@ -56,7 +56,6 @@ serverSockets.on('connection', function(inSocket){
        console.log('client has disconnected', inSocket.chatMeta);
        removeFrom(inSocket, sockets);
        removeFrom(inSocket, registered);
-       
        ///////////////////
        inSocket.broadcast.emit('left', inSocket.chatMeta);
     });
