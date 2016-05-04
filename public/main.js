@@ -103,11 +103,11 @@ Chat.factory("FactoryWords", ["FactorySocket", "FactoryUser", function(inSocket,
         
         words.user.guesses--;
         words.guess(inIndex);
-        words.socket.emit('guess', inIndex);
-        
         if(words.correct === words.list[inIndex]){
             words.user.award();
             words.socket.emit('correct', words.correct);
+        }else{
+            words.socket.emit('guess', inIndex);
         }
     };
     words.guess = function(inIndex){
@@ -250,23 +250,27 @@ Chat.controller("ControllerChat", ["$scope", "FactorySocket", "FactoryUser", "Fa
         inScope.$apply();
     });
     
-
+     //// game states
     // draw mode
     sockets.on('state-drawing', function(inState){
         inScope.words.create(inState.words);
         inScope.user.drawing = true;
         inScope.user.guessing = false;
         inScope.$apply();
-        alert("you are drawing");
     });
-    
+    // guess mode
     sockets.on('state-guessing', function(inState){
         inScope.words.create(inState.words);
         inScope.user.guesses = 3;
         inScope.user.drawing = false;
         inScope.user.guessing = true;
         inScope.$apply();
-        alert("you are guessing");
+    });
+    // all off
+    sockets.on('state-disabled', function(inState){
+        inScope.user.drawing = false;
+        inScope.user.guessing = false;
+        inScope.$apply();
     });
     
 }]);
