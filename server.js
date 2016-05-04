@@ -56,12 +56,11 @@ game.checkGuess = function(inIndex){
 game.startRound = function(inDrawer){
     game.words = fishbowl(15);
     game.drawer = inDrawer;
-    
     game.drawer.emit('state-drawing', game.getState());
     game.drawer.broadcast.emit('state-guessing', game.getState());
 };
 game.addGuesser = function(inGuesser){
-    inDrawer.emit('state-guessing', game.getSate());
+    inGuesser.emit('state-guessing', game.getState());
 };
 
 serverSockets = socket_io(serverHTTP);
@@ -132,25 +131,18 @@ serverSockets.on('connection', function(inSocket){
     
     inSocket.on('guess', function(inGuess){
         console.log("someone guessed", inGuess);
-        
-        var check;
-        var state;
-        check = game.checkGuess(inGuess);
-        if(check){
-            game.startRound(inSocket);
-        }else{
-            //////////////////
-            inSocket.broadcast.emit('guess', inGuess);
-        }
+        //////////////////
+        inSocket.broadcast.emit('guess', inGuess);
     });
     
-    /*
     inSocket.on('correct', function(){
         inSocket.chatMeta.points++;
         //////////////////
         inSocket.broadcast.emit('correct', inSocket.chatMeta);
+        
+        //////////////////
+        game.startRound(inSocket);
     });
-    */
     
 });
 

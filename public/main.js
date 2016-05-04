@@ -11,7 +11,7 @@ Chat.factory("FactoryUser", [function(){
     user.message = '';
     user.authenticated = false;
     user.drawing = false;
-    user.guessing = true;
+    user.guessing = false;
     user.guesses = 3;
     user.points = 0;
     
@@ -244,6 +244,8 @@ Chat.controller("ControllerChat", ["$scope", "FactorySocket", "FactoryUser", "Fa
     });
     // correct guess
     sockets.on('correct', function(inUser){
+        
+        console.log('CORRECT event recieved', inUser);
         inScope.members.award(inUser);
         inScope.$apply();
     });
