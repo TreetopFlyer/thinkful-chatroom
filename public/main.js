@@ -87,32 +87,14 @@ Chat.factory("FactoryWords", ["FactorySocket", "FactoryUser", function(inSocket,
     words.user = inUser;
     words.socket = inSocket;
     
-    words.all = ["word", "letter", "number", "person", "pen", "class", "people",
-    "sound", "water", "side", "place", "man", "men", "woman", "women", "boy",
-    "girl", "year", "day", "week", "month", "name", "sentence", "line", "air",
-    "land", "home", "hand", "house", "picture", "animal", "mother", "father",
-    "brother", "sister", "world", "head", "page", "country", "question",
-    "answer", "school", "plant", "food", "sun", "state", "eye", "city", "tree",
-    "farm", "story", "sea", "night", "day", "life", "north", "south", "east",
-    "west", "child", "children", "example", "paper", "music", "river", "car",
-    "foot", "feet", "book", "science", "room", "friend", "idea", "fish",
-    "mountain", "horse", "watch", "color", "face", "wood", "list", "bird",
-    "body", "dog", "family", "song", "door", "product", "wind", "ship", "area",
-    "rock", "order", "fire", "problem", "piece", "top", "bottom", "king",
-    "space"];
-    
     words.list = [];
-    for(var i=0; i<words.all.length; i++){
-        words.list.push({word:words.all[i], index:i, guessed:false});
-    }
-
     words.correct = 0;
-    words.reset = function(){
-        for(var i=0; i<words.all.length; i++){
-            words.all[i].guessed = false;
+    words.create = function(inFishbowl){
+        words.list = [];
+        for(var i=0; i<inFishbowl.words.length; i++){
+            words.list.push({word:inFishbowl.words[i], index:i, guessed:false});
         }
-        words.correct = words.list[Math.floor(Math.random()*words.list.length)];
-        console.log(words.correct);
+        words.correct = words.list[inFishbowl.index];
     };
     
     words.click = function(inIndex){
@@ -131,10 +113,8 @@ Chat.factory("FactoryWords", ["FactorySocket", "FactoryUser", function(inSocket,
     words.guess = function(inIndex){
         words.list[inIndex].guessed = true;
     };
-
-    words.reset();
-    return words;
     
+    return words;
 }]);
 
 Chat.directive("ngDrawing", ["FactorySocket", "$parse", function(inSocket, inParser){
@@ -270,16 +250,21 @@ Chat.controller("ControllerChat", ["$scope", "FactorySocket", "FactoryUser", "Fa
     
 
     // draw mode
-    sockets.on('state-drawing', function(inUser){
+    sockets.on('state-drawing', function(inState){
+        inScope.words.create(inState.words);
         inScope.user.drawing = true;
         inScope.user.guessing = false;
         inScope.$apply();
+        alert("you are drawing");
     });
     
-    sockets.on('state-guessing', function(inUser){
+    sockets.on('state-guessing', function(inState){
+        inScope.words.create(inState.words);
+        inScope.user.guesses = 3;
         inScope.user.drawing = false;
         inScope.user.guessing = true;
         inScope.$apply();
+        alert("you are guessing");
     });
     
 }]);

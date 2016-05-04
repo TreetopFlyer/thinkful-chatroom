@@ -1,6 +1,7 @@
 var express = require('express');
 var http = require('http');
 var socket_io = require('socket.io');
+var fishbowl = require('./fishbowl');
 
 var serverExpress, serverHTTP, serverSockets;
 var sockets, registered, drawing;
@@ -10,6 +11,7 @@ serverExpress.use(express.static('public'));
 
 serverHTTP = http.Server(serverExpress);
 serverHTTP.listen(80);
+
 
 sockets = [];
 registered = [];
@@ -34,6 +36,33 @@ function extractMetas(inArray){
     }
     return out;
 }
+
+var game = {};
+game.drawer = undefined;
+game.words = undefined;
+game.getState = function(){
+    return {
+        drawer:game.drawer.chatMeta,
+        words:game.words
+    };
+};
+game.checkGuess = function(inIndex){
+    if(inIndex == game.words.index){
+        return true;
+    }else{
+        return false;
+    }
+};
+game.startRound = function(inDrawer){
+    game.words = fishbowl(15);
+    game.drawer = inDrawer;
+    
+    game.drawer.emit('state-drawing', game.getState());
+    game.drawer.broadcast.emit('state-guessing', game.getState());
+};
+game.addGuesser = function(inGuesser){
+    inDrawer.emit('state-guessing', game.getSate());
+};
 
 serverSockets = socket_io(serverHTTP);
 serverSockets.on('connection', function(inSocket){
@@ -73,12 +102,15 @@ serverSockets.on('connection', function(inSocket){
        inSocket.chatMeta.alias = inMessage;
        addTo(inSocket, registered);
        
-       if(registered.length == 1){
-           inSocket.emit('state-drawing', inSocket.chatMeta);
+       if(registered.length == 2){
+           game.startRound(registered[0]);
+           game.addGuesser(registered[1]);
        }else{
-           inSocket.emit('state-guessing', inSocket.chatMeta);
+           if(registered.length > 2){
+               game.addGuesser(inSocket);
+           }
        }
-       
+
        console.log('client has alias', inSocket.chatMeta);
        ///////////////////
        inSocket.broadcast.emit('joined', inSocket.chatMeta);
@@ -100,15 +132,25 @@ serverSockets.on('connection', function(inSocket){
     
     inSocket.on('guess', function(inGuess){
         console.log("someone guessed", inGuess);
-        //////////////////
-        inSocket.broadcast.emit('guess', inGuess);
+        
+        var check;
+        var state;
+        check = game.checkGuess(inGuess);
+        if(check){
+            game.startRound(inSocket);
+        }else{
+            //////////////////
+            inSocket.broadcast.emit('guess', inGuess);
+        }
     });
     
+    /*
     inSocket.on('correct', function(){
         inSocket.chatMeta.points++;
         //////////////////
         inSocket.broadcast.emit('correct', inSocket.chatMeta);
-    })
+    });
+    */
     
 });
 
