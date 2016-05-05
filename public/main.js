@@ -16,7 +16,6 @@ Chat.factory("FactoryUser", ["FactorySocket", function(inSocket){
     user.points = 0;
     
     user.award = function(){
-        console.log("Client awarded! the dom may need updating tho :(");
         user.points++;
         user.guesses = 0;
     };
@@ -76,29 +75,6 @@ Chat.factory("FactoryMembers", [function(){
             }
         }  
     };
-    members.setDrawing = function(inUser){
-        console.log("set drawing ", inUser);
-        /*
-        members.noDrawing();
-        
-        var i;
-        for(i=0; i<members.log.length; i++){
-            if(members.log[i].id === inUserData.id){
-                members.drawing = members.log[i];
-                members.drawing.drawing = true;
-                return;
-            }
-        }  
-        */
-    };
-    members.noDrawing = function(){
-        /*
-        if(members.drawing){
-            members.drawing.drawing = false;
-        }
-        */
-    };
-    
     return members;
 }]);
 
@@ -278,8 +254,6 @@ Chat.controller("ControllerChat", ["$scope", "FactorySocket", "FactoryUser", "Fa
         inScope.words.create(inState.words);
         inScope.user.drawing = true;
         inScope.user.guessing = false;
-        
-        inScope.members.setDrawing(inState.drawer);
         inScope.$apply();
     });
     // guess mode
@@ -288,16 +262,12 @@ Chat.controller("ControllerChat", ["$scope", "FactorySocket", "FactoryUser", "Fa
         inScope.user.guesses = 3;
         inScope.user.drawing = false;
         inScope.user.guessing = true;
-        
-        inScope.members.setDrawing(inState.drawer);
         inScope.$apply();
     });
     // all off
     sockets.on('state-disabled', function(inState){
         inScope.user.drawing = false;
         inScope.user.guessing = false;
-        
-        inScope.members.noDrawing();
         inScope.$apply();
     });
     
