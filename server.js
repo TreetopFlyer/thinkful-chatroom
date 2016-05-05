@@ -29,7 +29,7 @@ serverSockets.on('connection', function(inSocket){
        meta.removeFromArray(inSocket, registered);
        if(registered.length < 2){
             console.log("game must be shut down");
-            inSocket.broadcast.emit('state-disabled', game.getState());
+            inSocket.broadcast.emit('state-disabled', true);
        }else{
             if(inSocket.chatMeta.drawing){
                 console.log("drawer has left! picking new random drawer.");
@@ -72,6 +72,11 @@ serverSockets.on('connection', function(inSocket){
     inSocket.on('draw', function(inPosition) {
         //////////////////
         inSocket.broadcast.emit('draw', inPosition);
+    });
+    
+    inSocket.on('clear', function(inValue) {
+        //////////////////
+        inSocket.broadcast.emit('clear', inValue);
     });
     
     inSocket.on('guess', function(inGuess){

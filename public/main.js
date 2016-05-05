@@ -97,7 +97,7 @@ Chat.factory("FactoryWords", ["FactorySocket", "FactoryUser", "FactoryMembers", 
     };
     
     words.click = function(inIndex){
-        if(words.user.guesses <= 0 || !words.user.authenticated || words.user.drawing)
+        if(words.user.guesses <= 0 || !words.user.authenticated || words.user.drawing || !words.user.guessing)
             return;
         
         words.user.guesses--;
@@ -124,7 +124,7 @@ Chat.directive("ngDrawing", ["FactorySocket", "$parse", function(inSocket, inPar
             var canvas, context;
             var handlerDown, handlerMove, handlerUp;
             var interactivityEnable, interactivityDisable;
-            var draw;
+            var draw, clear;
 
             canvas = $(inElement[0]);
             context = canvas.get(0).getContext('2d');
@@ -138,6 +138,19 @@ Chat.directive("ngDrawing", ["FactorySocket", "$parse", function(inSocket, inPar
             };
             inSocket.on('draw', draw);
 
+            clear = function(){
+                context.clearRect(0, 0, canvas[0].width, canvas[0].height);  
+            };
+            inScope.clearCanvas = function(){
+                //this is such a hack i know
+                clear();
+                inSocket.emit('clear', true);
+            };
+            inSocket.on('clear', function(){
+                console.log('clear websocket event recieved');
+                clear();
+            });
+            
             handlerDown = function(inEvent){
                 canvas.unbind('mousedown', handlerDown);
                 $(document).bind('mouseup', handlerUp);
@@ -265,10 +278,12 @@ Chat.controller("ControllerChat", ["$scope", "FactorySocket", "FactoryUser", "Fa
         inScope.$apply();
     });
     // all off
-    sockets.on('state-disabled', function(inState){
+    sockets.on('state-disabled', function(inValue){
         inScope.user.drawing = false;
         inScope.user.guessing = false;
         inScope.$apply();
     });
+    
+    console.log(inScope.canvas);
     
 }]);

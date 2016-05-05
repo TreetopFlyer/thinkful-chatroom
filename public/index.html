@@ -19,6 +19,9 @@
                 display:inline-block;
                 margin:0px 0px 3px 0px;
             }
+            canvas[ng-drawing]{
+                display:block;
+            }
         </style>
     </head>
     <body ng-app="Chat">
@@ -44,7 +47,8 @@
                                 You are <strong>drawing</strong>.
                                 Your word is: <strong>{{words.correct.word}}</strong>.
                             </h3>
-                            <canvas ng-drawing ng-interactive="user.drawing && user.authenticated" width="500" height="400" style="width:500px; height:400px;"></canvas>
+                            <canvas ng-drawing ng-interactive="user.drawing && user.authenticated" ng-clear="clearCanvas" width="500" height="400" style="width:500px; height:400px;"></canvas>
+                            <button class="btn btn-primary" ng-click="clearCanvas();" ng-show="(user.authenticated && user.drawing)">Erase Drawing</button>
                         </div>
                     </div>
                     
