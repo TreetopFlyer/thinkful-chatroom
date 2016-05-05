@@ -124,8 +124,11 @@ Chat.directive("ngDrawing", ["FactorySocket", "$parse", function(inSocket, inPar
             var canvas, context;
             var handlerDown, handlerMove, handlerUp;
             var interactivityEnable, interactivityDisable;
-            var draw, clear;
-
+            var draw, stroke, clear;
+            
+            var posNew, posOld;
+            var getPos;
+            
             canvas = $(inElement[0]);
             context = canvas.get(0).getContext('2d');
             canvas[0].width = canvas[0].offsetWidth;
@@ -137,6 +140,17 @@ Chat.directive("ngDrawing", ["FactorySocket", "$parse", function(inSocket, inPar
                 context.fill();
             };
             inSocket.on('draw', draw);
+            
+            stroke = function(inOld, inNew){
+                context.beginPath();
+                context.moveTo(inOld.x, inOld.y);
+                context.lineTo(inNew.x, inNew.y);
+                context.stroke();
+            }
+            inSocket.on('stroke', function(inObj){
+                stroke(inObj.old, inObj.new);
+            });
+            
 
             clear = function(){
                 context.clearRect(0, 0, canvas[0].width, canvas[0].height);  
@@ -151,18 +165,25 @@ Chat.directive("ngDrawing", ["FactorySocket", "$parse", function(inSocket, inPar
                 clear();
             });
             
+            getPos = function(inEvent){
+                var offset = canvas.offset();
+                return {x:inEvent.pageX - offset.left, y:inEvent.pageY - offset.top};
+            };
+            
             handlerDown = function(inEvent){
                 canvas.unbind('mousedown', handlerDown);
                 $(document).bind('mouseup', handlerUp);
                 canvas.bind('mousemove', handlerMove);
+
+                posOld = posNew = getPos(inEvent);
             };
             handlerMove = function(inEvent){
                         
-                var offset = canvas.offset();
-                var pos = {x:inEvent.pageX - offset.left, y:inEvent.pageY - offset.top};
+                posOld = posNew;
+                posNew = getPos(inEvent);
  
-                draw(pos);
-                inSocket.emit('draw', pos);
+                stroke(posOld, posNew);
+                inSocket.emit('stroke', {old:posOld, new:posNew});
             };
             handlerUp = function(inEvent){
                 $(document).unbind('mouseup', handlerUp);

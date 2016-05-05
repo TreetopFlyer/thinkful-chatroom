@@ -73,6 +73,10 @@ serverSockets.on('connection', function(inSocket){
         //////////////////
         inSocket.broadcast.emit('draw', inPosition);
     });
+    inSocket.on('stroke', function(inStroke) {
+        //////////////////
+        inSocket.broadcast.emit('stroke', inStroke);
+    });
     
     inSocket.on('clear', function(inValue) {
         //////////////////
