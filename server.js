@@ -98,6 +98,7 @@ serverSockets.on('connection', function(inSocket){
     assignMeta(inSocket);
     sockets.push(inSocket);
     
+    console.log(inSocket.chatMeta);
     inSocket.emit('members', extractMetas(registered));
     
     inSocket.on('disconnect', function(){
