@@ -1,4 +1,5 @@
 var fishbowl = require('./fishbowl');
+var chatBot = require('./chatbot');
 
 exports.drawer = undefined;
 exports.words = undefined;

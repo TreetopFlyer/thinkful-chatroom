@@ -3,14 +3,13 @@ var http = require('http');
 var socket_io = require('socket.io');
 var game = require('./gameData/game');
 var meta = require('./gameData/meta');
+var chatBot = require('./gameData/chatBot');
 
 var serverExpress, serverHTTP, serverSockets;
-var sockets, registered, chatBot;
+var sockets, registered;
 
 sockets = []; // list of connected users
 registered = []; // list of users that have signed on with a name
-chatBot = meta.addMetaToSocket({conn:{id:1}}); // fake 'user' for sending chat messages to everyone
-chatBot.chatMeta.alias = 'ChatBot';
 
 serverExpress = express();
 serverExpress.use(express.static('public'));
